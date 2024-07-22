@@ -1,0 +1,46 @@
+ # Copyright (c) 2022, salesforce.com, inc.
+ # All rights reserved.
+ # SPDX-License-Identifier: BSD-3-Clause
+ # For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
+
+datasets:
+  ok_vqa:
+    data_type: images # [images|videos|features]
+
+    build_info:
+      # Be careful not to append minus sign (-) before split to avoid itemizing
+      annotations:
+      # ------------------------------------------------------------- train data ------------------------------------------------------------- # 
+        train:
+          url:
+              # TODO make this order insensitive
+              - https://storage.googleapis.com/sfr-vision-language-research/LAVIS/datasets/okvqa/okvqa_train.json
+              # - https://storage.googleapis.com/sfr-vision-language-research/LAVIS/datasets/okvqa/OpenEnded_mscoco_train2014_questions.json
+              # - https://storage.googleapis.com/sfr-vision-language-research/LAVIS/datasets/okvqa/mscoco_train2014_annotations.json
+          storage:
+              - /content/drive/MyDrive/VQA-MLLM-stage2-stage2-vicuna/daiv/data/okvqa/okvqa_train.json
+              # - okvqa/annotations/OpenEnded_mscoco_train2014_questions.json
+              # - okvqa/annotations/mscoco_train2014_annotations.json
+        # -------------------------------------------------------------------------------------------------------------------------------------- # 
+
+        # ------------------------------------------------------------- test data ------------------------------------------------------------- # 
+        # test:
+        #   url:
+        #       # TODO make this order insensitive
+        #       - https://storage.googleapis.com/sfr-vision-language-research/LAVIS/datasets/okvqa/okvqa_val_eval.json
+        #       - https://storage.googleapis.com/sfr-vision-language-research/LAVIS/datasets/okvqa/okvqa_answer_list_train.json
+        #       - https://storage.googleapis.com/sfr-vision-language-research/LAVIS/datasets/okvqa/OpenEnded_mscoco_val2014_questions.json
+        #       - https://storage.googleapis.com/sfr-vision-language-research/LAVIS/datasets/okvqa/mscoco_val2014_annotations.json
+        #   storage:
+        #       # - okvqa/annotations/vqa_val_eval.json
+        #       # - okvqa/annotations/answer_list.json
+        #       # - okvqa/annotations/OpenEnded_mscoco_val2014_questions.json
+        #       # - okvqa/annotations/mscoco_val2014_annotations.json
+        #       # EVAL ONE BATCH
+        #       - /root/workspace/24s-VQA-MLLM/BEiT3/stage2-eval/VQA-MLLM-stage2/daiv/data/okvqa/okvqa_val_one.json
+        #       - /root/datasets/okvqa/data/assets/answer_dict_okvqa.json
+        #       - /root/datasets/okvqa/data/okvqa/OpenEnded_mscoco_val2014_questions.json
+        #       - /root/datasets/okvqa/data/okvqa/mscoco_val2014_annotations.json
+        # -------------------------------------------------------------------------------------------------------------------------------------- # 
+      images:
+          storage: /content/drive/MyDrive/coco2014
