@@ -520,6 +520,7 @@ class Blip2Qformer(Blip2Base):
             max_txt_len=max_txt_len,
         )
         model.load_checkpoint_from_config(cfg)
+        model.load_mcan_weights('/content/drive/MyDrive/epoch13.pkl')
 
         return model
 

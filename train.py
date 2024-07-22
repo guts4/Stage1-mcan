@@ -103,7 +103,6 @@ def main():
     datasets = task.build_datasets(cfg)
     model = task.build_model(cfg)
     #print(model)
-    model.load_mcan_weights('/content/drive/MyDrive/epoch13.pkl')
 
     runner = get_runner_class(cfg)(
         cfg=cfg, job_id=job_id, task=task, model=model, datasets=datasets
