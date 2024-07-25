@@ -6,7 +6,6 @@
 """
 
 import argparse
-import os
 import random
 
 import numpy as np
@@ -21,18 +20,15 @@ from daiv.common.optims import (
     LinearWarmupCosineLRScheduler,
     LinearWarmupStepLRScheduler,
 )
-from daiv.common.registry import registry
 from daiv.common.utils import now
 
 # imports modules for registration
 from daiv.datasets.builders import *
 from daiv.models import *
 from daiv.processors import *
-from daiv.runners import *
+from daiv.runners.runner_base import RunnerBase
 from daiv.tasks import *
-import torch.distributed as dist
 
-import wandb
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Training")
@@ -64,53 +60,33 @@ def setup_seeds(config):
     cudnn.deterministic = True
 
 
-def get_runner_class(cfg):
-    """
-    Get runner class from config. Default to epoch-based runner.
-    """
-    runner_cls = registry.get_runner_class(cfg.run_cfg.get("runner", "runner_base"))
-
-    return runner_cls
-
-
 def main():
     # allow auto-dl completes on main process without timeout when using NCCL backend.
     # os.environ["NCCL_BLOCKING_WAIT"] = "1"
-    
-    # set before init_distributed_mode() to ensure the same job_id shared across all ranks.
-    
-    #for flant5 
-    os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-    
+    # set before init_distributed_mode() to ensure the same job_id shared across all ranks.
     job_id = now()
-    
+
     cfg = Config(parse_args())
 
-    init_distributed_mode(cfg.run_cfg)
-    
-    if get_rank() == 0:
-        wandb.init(project="bliva")
-    
-    setup_seeds(cfg)
+    init_distributed_mode(cfg.run_cfg) #분산 환경 설정
+
+    setup_seeds(cfg) #랜덤 시드 값 설정
 
     # set after init_distributed_mode() to only log on master.
-    setup_logger()
+    setup_logger() # 분산 학습 환경에서 로깅 설정을 초기화하는 함수
 
     cfg.pretty_print()
 
     task = tasks.setup_task(cfg)
     datasets = task.build_datasets(cfg)
     model = task.build_model(cfg)
-    #print(model)
-    
 
-    runner = get_runner_class(cfg)(
+    runner = RunnerBase(
         cfg=cfg, job_id=job_id, task=task, model=model, datasets=datasets
     )
-    runner.train()
+    runner.evaluate(skip_reload=True)
 
-    wandb.finish()
-    
+
 if __name__ == "__main__":
     main()

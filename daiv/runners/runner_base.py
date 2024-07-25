@@ -445,7 +445,7 @@ class RunnerBase:
 
     def evaluate(self, cur_epoch="best", skip_reload=False):
         test_logs = dict()
-
+        print(len(self.test_splits))
         if len(self.test_splits) > 0:
             for split_name in self.test_splits:
                 test_logs[split_name] = self.eval_epoch(
@@ -496,6 +496,7 @@ class RunnerBase:
         # if not skip_reload and cur_epoch == "best":
         #     model = self._reload_best_model(model)
         model.eval()
+        print("Working")
 
         self.task.before_evaluation(
             model=model,
@@ -504,6 +505,11 @@ class RunnerBase:
         results = self.task.evaluation(model, data_loader)
 
         if results is not None:
+            task_cfg = self.config.task_cfg  # assume task configuration is available in self.config
+            sim_matrix = self.model.compute_sim_matrix(data_loader, task_cfg)
+            results["sim_matrix"] = sim_matrix
+            self.log_stats(results, split_name)
+
             return self.task.after_evaluation(
                 val_result=results,
                 split_name=split_name,
@@ -725,7 +731,9 @@ class RunnerBase:
             log_stats = {**{f"{split_name}_{k}": v for k, v in stats.items()}}
             with open(os.path.join(self.output_dir, "log.txt"), "a") as f:
                 f.write(json.dumps(log_stats) + "\n")
+            print(f"Log for {split_name} saved successfully.")
         elif isinstance(stats, list):
+            print("Fail")
             pass
 
     @main_process

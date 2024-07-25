@@ -59,10 +59,10 @@ class COCOVQADataset(VQADataset):
         image_filename = f"train2014/COCO_train2014_{ann['image_id']:012d}.jpg"
         image_path = os.path.join(self.vis_root, image_filename)
 
-        # if not os.path.exists(image_path):
-        # #    # 이미지가 없으면 다음 항목으로 넘어갑니다.
-        # #    print(f"Warning: File {image_path} does not exist in . Skipping this item.")
-        #     return self.__getitem__((index + 1) % len(self))
+        if not os.path.exists(image_path):
+         #    # 이미지가 없으면 다음 항목으로 넘어갑니다.
+         #    print(f"Warning: File {image_path} does not exist in . Skipping this item.")
+            return self.__getitem__((index + 1) % len(self))
 
         image = Image.open(image_path).convert("RGB")
         image = self.vis_processor(image)

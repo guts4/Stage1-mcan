@@ -39,7 +39,7 @@ class Blip2Qformer(Blip2Base):
         FLAT_OUT_SIZE = 2048
         WORD_EMBED_SIZE = 300
         USE_GLOVE = False
-        IMG_FEAT_SIZE = 2048  # This should match the output feature size of the visual encoder
+        IMG_FEAT_SIZE = 1408  # This should match the output feature size of the visual encoder
 
     def __init__(
         self,
@@ -74,6 +74,9 @@ class Blip2Qformer(Blip2Base):
         
         #self.MCAN.resize_token_embeddings(len(self.tokenizer))
 
+        # 중간 선형 레이어 추가
+        self.intermediate_proj_itm = nn.Linear(self.Config.HIDDEN_SIZE, embed_dim)
+        self.intermediate_proj_lm = nn.Linear(self.Config.HIDDEN_SIZE, embed_dim)
 
         #self.vision_proj = nn.Linear(self.Config.IMG_FEAT_SIZE, embed_dim)
         #self.text_proj = nn.Linear(self.Config.WORD_EMBED_SIZE, self.Config.HIDDEN_SIZE)  # Adjusted to match the embedding size
@@ -260,7 +263,8 @@ class Blip2Qformer(Blip2Base):
         vl_embeddings_image = output_image[:, :image_embeds_all.size(1), :]
 
         # Assuming further processing is needed with only one of the outputs
-        vl_output = self.itm_head(vl_embeddings_text)
+        vl_output = self.itm_head(F.relu(self.intermediate_proj_itm(vl_embeddings_text)))
+        #vl_output = self.itm_head(vl_embeddings_text)
         logits = vl_output.mean(dim=1)
 
         itm_labels = torch.cat(
@@ -300,7 +304,8 @@ class Blip2Qformer(Blip2Base):
 
 
         # Pass the output text embeddings to the language modeling head
-        logits = self.lm_head(output_text)
+        logits = self.lm_head(F.relu(self.intermediate_proj_lm(output_text)))
+        #logits = self.lm_head(output_text)
         #print(f'logits size: {logits.size()}, dtype: {logits.dtype}')
         #print(f'logits: {logits}')
 
@@ -520,7 +525,7 @@ class Blip2Qformer(Blip2Base):
             max_txt_len=max_txt_len,
         )
         model.load_checkpoint_from_config(cfg)
-        model.load_mcan_weights('/content/drive/MyDrive/epoch13.pkl')
+        #model.load_mcan_weights('/content/drive/MyDrive/epoch13.pkl')
 
         return model
 
@@ -536,6 +541,8 @@ class Blip2Qformer(Blip2Base):
         # embedding.weight를 제외한 나머지 가중치를 로드하도록 수정
         if 'embedding.weight' in mcan_state_dict:
             del mcan_state_dict['embedding.weight']
+        if 'img_feat_linear.weight' in mcan_state_dict:
+            del mcan_state_dict['img_feat_linear.weight']
 
         self.MCAN.load_state_dict(mcan_state_dict, strict=False)
         print("MCAN weights loaded successfully.")

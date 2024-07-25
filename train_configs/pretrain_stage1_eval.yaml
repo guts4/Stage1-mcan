@@ -1,0 +1,34 @@
+# Copyright (c) 2022, salesforce.com, inc.
+# All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause
+# For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
+
+model:
+  arch: blip2
+  model_type: pretrain  # Specify the model type if needed
+  load_pretrained: True
+  freeze_vit: True
+  pretrained: '/content/drive/MyDrive/stage1_mcan_checkpoint_25.pth'
+
+datasets:
+  ok_vqa:
+    vis_processor:
+      eval:
+        name: "blip_image_eval"
+        image_size: 224
+    text_processor:
+      eval:
+        name: "blip_caption"
+
+run:
+  task: image_text_pretrain
+  batch_size_eval: 8  # Adjust based on your available hardware
+  num_workers: 4
+  output_dir: "output/BLIP2/Pretrain_stage1_eval"
+  device: "cuda"  # Use "cpu" if you don't have a GPU
+  distributed: False
+  world_size: 1
+  dist_url: "env://"
+  evaluate: True
+  seed: 42
+  test_splits: ["test"]
