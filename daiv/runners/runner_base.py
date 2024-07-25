@@ -487,7 +487,7 @@ class RunnerBase:
 
         # TODO In validation, you need to compute loss as well as metrics
         # TODO consider moving to model.before_evaluation()
-        model = self._load_checkpoint(self.resume_ckpt_path)
+        model = self._load_checkpoint("/content/drive/MyDrive/stage1_mcan_checkpoint_25.pth")
         # checkpoint = torch.load(url_or_filename, map_location=self.device)
         # state_dict = checkpoint["model"]
         # model = self.unwrap_dist_model(self.model)

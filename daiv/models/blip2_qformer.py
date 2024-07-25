@@ -379,13 +379,14 @@ class Blip2Qformer(Blip2Base):
         return captions
 
     def forward_image(self, image):
+        print(image.shape)
         image_embeds = self.ln_vision(self.visual_encoder(image))
         image_embeds = self.MCAN.img_feat_linear(image_embeds)  # Project image features to the correct size
         image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
 
         lang_feat_mask = self.MCAN.make_mask(image_embeds)
 
-        query_output = self.MCAN.backbone(
+        query_output, _ = self.MCAN.backbone(
             image_embeds,
             image_embeds,
             lang_feat_mask,
@@ -398,7 +399,7 @@ class Blip2Qformer(Blip2Base):
         lang_feat_mask = self.MCAN.make_mask(text_tokens.input_ids.unsqueeze(2))
         text_embeds, _ = self.MCAN.lstm(text_embeds)
 
-        text_output = self.MCAN.backbone(
+        text_output, _ = self.MCAN.backbone(
             text_embeds,
             text_embeds,
             lang_feat_mask,
@@ -413,7 +414,7 @@ class Blip2Qformer(Blip2Base):
         text_embeds, _ = self.MCAN.lstm(text_embeds)
         lang_feat_mask = self.MCAN.make_mask(text_ids.input_ids.unsqueeze(2))
 
-        output_itm = self.MCAN.backbone(
+        _, output_itm = self.MCAN.backbone(
             text_embeds,
             image_inputs,
             lang_feat_mask,
@@ -530,8 +531,9 @@ class Blip2Qformer(Blip2Base):
         return model
 
     def compute_sim_matrix(self, data_loader, task_cfg):
-        k_test = task_cfg.k_test
-
+        #k_test = task_cfg.k_test
+        k_test = 10
+        
         return compute_sim_matrix(model=self, data_loader=data_loader, k_test=k_test)
 
     def load_mcan_weights(self, checkpoint_path):

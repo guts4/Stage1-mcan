@@ -32,3 +32,13 @@ run:
   evaluate: True
   seed: 42
   test_splits: ["test"]
+  lr_sched: "linear_warmup_cosine_lr"
+  init_lr: 1e-4
+  min_lr: 1e-5
+  warmup_lr: 1e-6
+  weight_decay: 0.05
+  max_epoch: 10
+  batch_size_train: 8 #64
+  warmup_steps: 2000
+  amp: True
+  train_splits: ["train"]

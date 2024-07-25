@@ -84,23 +84,19 @@ class BaseTask:
         raise NotImplementedError
 
     def evaluation(self, model, data_loader, cuda_enabled=True):
-        metric_logger = MetricLogger(delimiter="  ")
-        header = "Evaluation"
-        # TODO make it configurable
-        print_freq = 10
+      metric_logger = MetricLogger(delimiter="  ")
+      header = "Evaluation"
+      # TODO make it configurable
+      print_freq = 10
 
-        results = []
+      results = []
 
-        for samples in metric_logger.log_every(data_loader, print_freq, header):
-            samples = prepare_sample(samples, cuda_enabled=cuda_enabled)
+      # Directly pass data_loader to valid_step
+      eval_output = self.valid_step(model=model, data_loader=data_loader)
+      results.extend(eval_output)
+      
+      return results
 
-            eval_output = self.valid_step(model=model, samples=samples)
-            results.extend(eval_output)
-
-        if is_dist_avail_and_initialized():
-            dist.barrier()
-
-        return results
 
     def train_epoch(
         self,

@@ -202,9 +202,9 @@ class LayerNorm(nn.LayerNorm):
         ret = super().forward(x.type(torch.float32))
         return ret.type(orig_type)
 
-
-def compute_sim_matrix(model, data_loader, **kwargs):
-    k_test = kwargs.pop("k_test")
+# dataloader->samples
+def compute_sim_matrix(model, data_loader, k_test):
+    k_test = k_test
 
     metric_logger = MetricLogger(delimiter="  ")
     header = "Evaluation:"
@@ -212,14 +212,14 @@ def compute_sim_matrix(model, data_loader, **kwargs):
     logging.info("Computing features for evaluation...")
     start_time = time.time()
 
-    texts = data_loader.dataset.text
+    texts = [sample["text_input"] for sample in data_loader.dataset]
     num_text = len(texts)
     text_bs = 256
     text_ids = []
     text_embeds = []
     text_atts = []
     for i in range(0, num_text, text_bs):
-        text = texts[i : min(num_text, i + text_bs)]
+        text = texts[i: min(num_text, i + text_bs)]
         text_input = model.tokenizer(
             text,
             padding="max_length",
@@ -228,7 +228,7 @@ def compute_sim_matrix(model, data_loader, **kwargs):
             return_tensors="pt",
         ).to(model.device)
         text_feat = model.forward_text(text_input)
-        text_embed = F.normalize(model.text_proj(text_feat))
+        text_embed = F.normalize(text_feat, dim=-1)
         text_embeds.append(text_embed)
         text_ids.append(text_input.input_ids)
         text_atts.append(text_input.attention_mask)
@@ -240,12 +240,9 @@ def compute_sim_matrix(model, data_loader, **kwargs):
     vit_feats = []
     image_embeds = []
     for samples in data_loader:
-        image = samples["image"]
-
-        image = image.to(model.device)
+        image = samples["image"].to(model.device)
         image_feat, vit_feat = model.forward_image(image)
-        image_embed = model.vision_proj(image_feat)
-        image_embed = F.normalize(image_embed, dim=-1)
+        image_embed = F.normalize(image_feat, dim=-1)
 
         vit_feats.append(vit_feat.cpu())
         image_embeds.append(image_embed)
@@ -261,7 +258,7 @@ def compute_sim_matrix(model, data_loader, **kwargs):
     sims_matrix = torch.stack(sims_matrix, dim=0)
 
     score_matrix_i2t = torch.full(
-        (len(data_loader.dataset.image), len(texts)), -100.0
+        (len(data_loader.dataset), len(texts)), -100.0
     ).to(model.device)
 
     num_tasks = dist_utils.get_world_size()
@@ -284,7 +281,7 @@ def compute_sim_matrix(model, data_loader, **kwargs):
 
     sims_matrix = sims_matrix.t()
     score_matrix_t2i = torch.full(
-        (len(texts), len(data_loader.dataset.image)), -100.0
+        (len(texts), len(data_loader.dataset)), -100.0
     ).to(model.device)
 
     step = sims_matrix.size(0) // num_tasks + 1

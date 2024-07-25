@@ -11,34 +11,19 @@ from daiv.tasks.base_task import BaseTask
 
 @registry.register_task("image_text_pretrain")
 class ImageTextPretrainTask(BaseTask):
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
+        self.config = config
 
-    # def evaluation(self, model, data_loader, cuda_enabled=True):
-    #     pass
-    
-    def valid_step(self, model, samples):
-        answers = model.predict_answers(
-            samples=samples,
-            answer_list=self.answer_list,
-            inference_method=self.inference_method,
-            num_beams=self.num_beams,
-            max_len=self.max_len,
-            min_len=self.min_len,
-            num_ans_candidates=self.num_ans_candidates,
-            prompt=self.prompt,
-        )
-        pred_qa_pairs = []
+    def valid_step(self, model, data_loader):
+        #task_cfg = self.config.task_cfg  # Access the task_cfg from the config
+        #k_test = task_cfg.get("k_test", 5)  # Default value for k_test if not provided
+        k_test=10
+        
+        sim_matrix = model.compute_sim_matrix(data_loader, k_test)
+        print("Sim Matrix:", sim_matrix)
 
-        question_id = samples["question_id"]
-        for answer, ques_id in zip(answers, question_id):
-            ques_id = int(ques_id.item()) if isinstance(ques_id, torch.Tensor) else ques_id
-            if ques_id != int and is_convertible_to_int(ques_id):
-                ques_id = int(ques_id)
-            pred_qa_pairs.append({"question_id": ques_id, "answer": answer})
-            print("question_id:", ques_id, "answer:", answer)
-
-        return pred_qa_pairs
+        return {"sim_matrix": sim_matrix}
 
     def after_evaluation(self, val_result, split_name, **kwargs):
         result_file = self.save_result(
@@ -53,3 +38,6 @@ class ImageTextPretrainTask(BaseTask):
 
         return metrics
 
+    @classmethod
+    def setup_task(cls, cfg):
+        return cls(cfg)
